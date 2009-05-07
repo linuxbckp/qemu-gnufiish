@@ -130,4 +130,6 @@ extern QEMUMachine tosapda_machine;
 
 extern QEMUMachine mini2440_machine;
 
+extern QEMUMachine glofiish_machine;
+
 #endif

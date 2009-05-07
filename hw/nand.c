@@ -357,7 +357,7 @@ void nand_setpins(struct nand_flash_s *s,
 
 void nand_getpins(struct nand_flash_s *s, int *rb)
 {
-    *rb = 1;
+    *rb = 5; //1;
 }
 
 void nand_setio(struct nand_flash_s *s, uint8_t value)

@@ -293,7 +293,7 @@ static void s3c_gpio_write(void *opaque, target_phys_addr_t addr,
     case S3C_GPDAT:
         diff = (s->bank[bank].dat ^ value) & s->bank[bank].mask;
         s->bank[bank].dat = value;
-    /*    printf("%s: write port '%c' = %08x\n", __FUNCTION__, 'A' + bank, s->bank[bank].dat); */
+        /*printf("%s: write port '%c' = %08x\n", __FUNCTION__, 'A' + bank, s->bank[bank].dat);*/
         while ((ln = ffs(diff))) {
             ln --;
             if (s->bank[bank].handler[ln]) {
