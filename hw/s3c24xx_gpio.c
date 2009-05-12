@@ -462,7 +462,7 @@ static void pretty_dump_a(uint32_t cfg, uint32_t state,
 		else
 			tag_state = level0;
 
-		printf("%s%02d: %s %s\n", prefix, n, tag_type,
+		printf("GP%s%02d: %s %s\n", prefix, n, tag_type,
 						   tag_state);
 	}
 	printf("\n");
@@ -497,15 +497,23 @@ struct s3c_gpio_state_s {	/* Modelled as an interrupt controller */
     uint32_t eintpend;
 };
 
-static void dump_register(void *opaque, int bank, int read)
+static void dump_register(void *opaque, int bank, int read, int conf)
 {
     struct reg *r = NULL;
     struct s3c_gpio_state_s *s = (struct s3c_gpio_state_s *) opaque;
+    const char *port = "port",
+         *configuration = "con",
+         *destination = NULL;
+    
+    if(conf)
+        destination = configuration;
+    else
+        destination = port;
 
     if(read)
-        printf("read register:\n");
+        printf("read %s:\n", destination);
     else 
-        printf("write register:\n");
+        printf("write %s:\n", destination);
     printf("================================\n");
 
     r = get_reg_cfg('A' + bank);
@@ -703,10 +711,10 @@ static uint32_t s3c_gpio_read(void *opaque, target_phys_addr_t addr)
     /* Per bank registers */
     case S3C_GPCON:
         //printf("%s: read con '%c' (%i) = %08x\n", __FUNCTION__, 'A' + bank, bank, s->bank[bank].con);
-        dump_register(s, bank, 1);
+        dump_register(s, bank, 1, 1);
         return s->bank[bank].con;
     case S3C_GPDAT:
-        dump_register(s, bank, 1);
+        dump_register(s, bank, 1, 0);
         //printf("%s: read port '%c' (%i) = %08x\n", __FUNCTION__, 'A' + bank, bank, s->bank[bank].dat); 
         return s->bank[bank].dat;
     case S3C_GPUP:
@@ -776,12 +784,12 @@ static void s3c_gpio_write(void *opaque, target_phys_addr_t addr,
         //printf("%s: write con '%c' (%i) = %08x\n", __FUNCTION__, 'A' + bank, bank, value);
         //printf("%s: GP%cDAT: %08x\n", __FUNCTION__,'A' + bank, s->bank[bank].dat);
         s->bank[bank].con = value;
-        dump_register(s, bank, 0);
+        dump_register(s, bank, 0, 1);
         break;
     case S3C_GPDAT:
         diff = (s->bank[bank].dat ^ value) & s->bank[bank].mask;
         s->bank[bank].dat = value;
-        dump_register(s, bank, 0);
+        dump_register(s, bank, 0, 0);
         //printf("%s: write port '%c' (%i) = %08x\n", __FUNCTION__, 'A' + bank, bank, s->bank[bank].dat);
         while ((ln = ffs(diff))) {
             ln --;
