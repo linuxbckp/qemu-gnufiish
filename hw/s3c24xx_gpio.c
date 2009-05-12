@@ -11,6 +11,463 @@
 #include "s3c.h"
 #include "hw.h"
 
+/*
+ * Stuff for dumping GPIO configuration
+ */
+
+static const char * funcs_a[] = {
+	"ADDR0      ",
+	"ADDR16     ",
+	"ADDR17     ",
+	"ADDR18     ",
+	"ADDR19     ",
+	"ADDR20     ",
+	"ADDR21     ",
+	"ADDR22     ",
+	"ADDR23     ",
+	"ADDR24     ",
+	"ADDR25     ",
+	"ADDR26     ",
+	"nGCS[1]    ",
+	"nGCS[2]    ",
+	"nGCS[3]    ",
+	"nGCS[4]    ",
+	"nGCS[5]    ",
+	"CLE        ",
+	"ALE        ",
+	"nFWE       ",
+	"nFRE       ",
+	"nRSTOUT    ",
+	"nFCE       ",
+	NULL,
+	NULL
+};
+
+
+static const char * funcs_b2[] = {
+	"TOUT0      ",
+	"TOUT1      ",
+	"TOUT2      ",
+	"TOUT3      ",
+	"TCLK[0]    ",
+	"nXBACK     ",
+	"nXBREQ     ",
+	"nXDACK1    ",
+	"nXDREQ1    ",
+	"nXDACK0    ",
+	"nXDREQ0    ",
+};
+static const char * funcs_b3[] = {
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+};
+
+static const char * funcs_c2[] = {
+	"LEND       ",
+	"VCLK       ",
+	"VLINE      ",
+	"VFRAME     ",
+	"VM         ",
+	"LCD_LPCOE  ",
+	"LCD_LPCREV ",
+	"LCD_LPCREVB",
+	"VD[0]      ",
+	"VD[1]      ",
+	"VD[2]      ",
+	"VD[3]      ",
+	"VD[4]      ",
+	"VD[5]      ",
+	"VD[6]      ",
+	"VD[7]      ",
+};
+static const char * funcs_c3[] = {
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	"I2SSDI     ",
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+};
+
+static const char * funcs_d2[] = {
+	"VD[8]      ",
+	"VD[9]      ",
+	"VD[10]     ",
+	"VD[11]     ",
+	"VD[12]     ",
+	"VD[13]     ",
+	"VD[14]     ",
+	"VD[15]     ",
+	"VD[16]     ",
+	"VD[17]     ",
+	"VD[18]     ",
+	"VD[19]     ",
+	"VD[20]     ",
+	"VD[21]     ",
+	"VD[22]     ",
+	"VD[23]     ",
+};
+static const char * funcs_d3[] = {
+	"nSPICS1    ",
+	"SPICLK1    ",
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	"SPIMISO1   ",
+	"SPIMOSI1   ",
+	"SPICLK1    ",
+	NULL,
+	NULL,
+	NULL,
+	"nSS1       ",
+	"nSS0       ",
+};
+
+static const char * funcs_e2[] = {
+	"I2SLRCK    ",
+	"I2SSCLK    ",
+	"CDCLK      ",
+	"I2SDI      ",
+	"I2SDO      ",
+	"SDCLK      ",
+	"SDCMD      ",
+	"SDDAT0     ",
+	"SDDAT1     ",
+	"SDDAT2     ",
+	"SDDAT3     ",
+	"SPIMISO0   ",
+	"SPIMOSI0   ",
+	"SPICLK0    ",
+	"IICSCL     ",
+	"IICSDA     ",
+};
+static const char * funcs_e3[] = {
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+};
+
+static const char * funcs_f2[] = {
+	"EINT[0]    ",
+	"EINT[1]    ",
+	"EINT[2]    ",
+	"EINT[3]    ",
+	"EINT[4]    ",
+	"EINT[5]    ",
+	"EINT[6]    ",
+	"EINT[7]    ",
+};
+static const char * funcs_f3[] = {
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+};
+
+
+static const char * funcs_g2[] = {
+	"EINT[8]    ",
+	"EINT[9]    ",
+	"EINT[10]   ",
+	"EINT[11]   ",
+	"EINT[12]   ",
+	"EINT[13]   ",
+	"EINT[14]   ",
+	"EINT[15]   ",
+	"EINT[16]   ",
+	"EINT[17]   ",
+	"EINT[18]   ",
+	"EINT[19]   ",
+	"EINT[20]   ",
+	"EINT[21]   ",
+	"EINT[22]   ",
+	"EINT[23]   ",
+};
+static const char * funcs_g3[] = {
+	NULL,
+	NULL,
+	"nSS0       ",
+	"nSS1       ",
+	"LCD_PWRDN  ",
+	"SPIMISO1   ",
+	"SPIMOSI1   ",
+	"SPICLK1    ",
+	NULL,
+	"nRTS1      ",
+	"nCTS1      ",
+	"TCLK[1]    ",
+	"nSPICS0    ",
+	NULL,
+	NULL,
+	NULL,
+};
+
+static const char * funcs_h2[] = {
+	"nCTS0      ",
+	"nRTS0      ",
+	"TXD[0]     ",
+	"RXD[0]     ",
+	"TXD[1]     ",
+	"RXD[1]     ",
+	"TXD[2]     ",
+	"RXD[2]     ",
+	"UEXTCLK    ",
+	"CLKOUT0    ",
+	"CLKOUT1    ",
+};
+static const char * funcs_h3[] = {
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	"nRTS1      ",
+	"nCTS1      ",
+	NULL,
+	"nSPICS0    ",
+	NULL,
+};
+
+static const char * funcs_j2[] = {
+	"CAMDATA[0] ",
+	"CAMDATA[1] ",
+	"CAMDATA[2] ",
+	"CAMDATA[3] ",
+	"CAMDATA[4] ",
+	"CAMDATA[5] ",
+	"CAMDATA[6] ",
+	"CAMDATA[7] ",
+	"CAMPCLK    ",
+	"CAMVSYNC   ",
+	"CAMHREF    ",
+	"CAMCLKOUT  ",
+	"CAMRESET   ",
+};
+static const char * funcs_j3[] = {
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+};
+
+struct reg {
+    const char postfix;
+    const char **func_names2;
+    const char **func_names3;
+    int num;
+};
+
+static struct reg reg_cfg[] = {
+    {
+        .postfix = 'A',
+        .num = 25,
+        .func_names2 = funcs_a,
+        .func_names3 = NULL,
+    },
+    {
+        .postfix = 'B',
+        .num = 11,
+        .func_names2 = funcs_b2,
+        .func_names3 = funcs_b3,
+    },
+    {
+        .postfix = 'C',
+        .num = 16,
+        .func_names2 = funcs_c2,
+        .func_names3 = funcs_c3,
+    },
+    {
+        .postfix = 'D',
+        .num = 16,
+        .func_names2 = funcs_d2,
+        .func_names3 = funcs_d3,
+    },
+    {
+        .postfix = 'E',
+        .num = 16,
+        .func_names2 = funcs_e2,
+        .func_names3 = funcs_e3,
+    },
+    {
+        .postfix = 'F',
+        .num = 8,
+        .func_names2 = funcs_f2,
+        .func_names3 = funcs_f3,
+    },
+    {
+        .postfix = 'G',
+        .num = 16,
+        .func_names2 = funcs_g2,
+        .func_names3 = funcs_g3,
+    },
+    {
+        .postfix = 'H',
+        .num = 11,
+        .func_names2 = funcs_h2,
+        .func_names3 = funcs_h3,
+    },
+    {
+        .postfix = 'J',
+        .num = 13,
+        .func_names2 = funcs_j2,
+        .func_names3 = funcs_j3,
+    },
+};
+
+static struct reg* get_reg_cfg(int regnum)
+{
+    int n;
+    for(n = 0; n < 10; n++) {
+        if(reg_cfg[n].postfix == regnum) {
+            return &reg_cfg[n];
+        }
+    }
+    return NULL;
+}
+
+static void pretty_dump(uint32_t cfg, uint32_t state, uint32_t pull,
+			const char ** function_names_2,
+			const char ** function_names_3,
+			const char * prefix,
+			int count)
+{
+	int n;
+	const char *tag_type = NULL,
+		   *tag_state = NULL,
+		   *tag_pulldown = NULL,
+		   * level0 = "0",
+		   * level1 = "1";
+
+	for (n = 0; n < count; n++) {
+		switch ((cfg >> (2 * n)) & 3) {
+		case 0:
+			tag_type = "input      ";
+			break;
+		case 1:
+			tag_type = "OUTPUT     ";
+			break;
+		case 2:
+			if (function_names_2) {
+				if (function_names_2[n])
+					tag_type = function_names_2[n];
+				else
+					tag_type = "*** ILLEGAL CFG (2) *** ";
+			} else
+				tag_type = "(function) ";
+			break;
+		default:
+			if (function_names_3) {
+				if (function_names_3[n])
+					tag_type = function_names_3[n];
+				else
+					tag_type = "*** ILLEGAL CFG (3) *** ";
+			} else
+				tag_type = "(function) ";
+			break;
+		}
+		if ((state >> n) & 1)
+			tag_state = level1;
+		else
+			tag_state = level0;
+
+        
+		if (((pull >> n) & 1))
+			tag_pulldown = "";
+		else
+			tag_pulldown = "(pulldown)";
+       
+		printf("GP%s%02d: %s %s \n", prefix, n, tag_type,
+						      tag_state);
+	}
+	printf("\n");
+}
+
+static void pretty_dump_a(uint32_t cfg, uint32_t state,
+			  const char ** function_names,
+			  const char * prefix,
+			  int count)
+{
+	int n;
+	const char *tag_type = NULL,
+		   *tag_state = NULL,
+		   * level0 = "0",
+		   * level1 = "1";
+
+	for (n = 0; n < count; n++) {
+		switch ((cfg >> n) & 1) {
+		case 0:
+			tag_type = "OUTPUT     ";
+			break;
+		default:
+			if (function_names) {
+				if (function_names[n])
+					tag_type = function_names[n];
+				else
+					tag_type = "*** ILLEGAL CFG *** ";
+			} else
+				tag_type = "(function) ";
+			break;
+		}
+		if ((state >> n) & 1)
+			tag_state = level1;
+		else
+			tag_state = level0;
+
+		printf("%s%02d: %s %s\n", prefix, n, tag_type,
+						   tag_state);
+	}
+	printf("\n");
+}
+
 /* S3C2410 : A B C D E F G H  = 8
  * S3C2440 : J = 1 */
 #define S3C_IO_BANKS	8
@@ -39,6 +496,31 @@ struct s3c_gpio_state_s {	/* Modelled as an interrupt controller */
     uint32_t eintmask;
     uint32_t eintpend;
 };
+
+static void dump_register(void *opaque, int bank, int read)
+{
+    struct reg *r = NULL;
+    struct s3c_gpio_state_s *s = (struct s3c_gpio_state_s *) opaque;
+
+    if(read)
+        printf("read register:\n");
+    else 
+        printf("write register:\n");
+    printf("================================\n");
+
+    r = get_reg_cfg('A' + bank);
+    if(!r)
+        printf("no configuration for register\n");
+    if(r && bank > 0)
+        pretty_dump(s->bank[bank].con,
+                    s->bank[bank].dat, 
+                    s->bank[bank].up, r->func_names2, 
+                    r->func_names3, &r->postfix, r->num);
+    else if(r && bank == 0)
+        pretty_dump_a(s->bank[bank].con,
+                      s->bank[bank].dat,
+                      r->func_names2, &r->postfix, r->num);
+}
 
 static inline void s3c_gpio_extint(struct s3c_gpio_state_s *s, int irq)
 {
@@ -220,9 +702,12 @@ static uint32_t s3c_gpio_read(void *opaque, target_phys_addr_t addr)
         return s->eintpend;
     /* Per bank registers */
     case S3C_GPCON:
+        //printf("%s: read con '%c' (%i) = %08x\n", __FUNCTION__, 'A' + bank, bank, s->bank[bank].con);
+        dump_register(s, bank, 1);
         return s->bank[bank].con;
     case S3C_GPDAT:
-       /* printf("%s: read port '%c' = %08x\n", __FUNCTION__, 'A' + bank, s->bank[bank].dat); */
+        dump_register(s, bank, 1);
+        //printf("%s: read port '%c' (%i) = %08x\n", __FUNCTION__, 'A' + bank, bank, s->bank[bank].dat); 
         return s->bank[bank].dat;
     case S3C_GPUP:
         return s->bank[bank].up;
@@ -288,12 +773,16 @@ static void s3c_gpio_write(void *opaque, target_phys_addr_t addr,
         break;
     /* Per bank registers */
     case S3C_GPCON:
+        //printf("%s: write con '%c' (%i) = %08x\n", __FUNCTION__, 'A' + bank, bank, value);
+        //printf("%s: GP%cDAT: %08x\n", __FUNCTION__,'A' + bank, s->bank[bank].dat);
         s->bank[bank].con = value;
+        dump_register(s, bank, 0);
         break;
     case S3C_GPDAT:
         diff = (s->bank[bank].dat ^ value) & s->bank[bank].mask;
         s->bank[bank].dat = value;
-        /*printf("%s: write port '%c' = %08x\n", __FUNCTION__, 'A' + bank, s->bank[bank].dat);*/
+        dump_register(s, bank, 0);
+        //printf("%s: write port '%c' (%i) = %08x\n", __FUNCTION__, 'A' + bank, bank, s->bank[bank].dat);
         while ((ln = ffs(diff))) {
             ln --;
             if (s->bank[bank].handler[ln]) {
@@ -382,7 +871,7 @@ struct s3c_gpio_state_s *s3c_gpio_init(target_phys_addr_t base, qemu_irq *pic, u
     int iomemtype;
     struct s3c_gpio_state_s *s = (struct s3c_gpio_state_s *)
             qemu_mallocz(sizeof(struct s3c_gpio_state_s));
-
+    
     s->cpu_id = cpu_id;
     s->base = base;
     s->pic = pic;
