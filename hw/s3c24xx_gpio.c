@@ -11,51 +11,53 @@
 #include "s3c.h"
 #include "hw.h"
 
+#include <stdlib.h>
+
 /*
  * Stuff for dumping GPIO configuration
  */
 
 static const char * funcs_a[] = {
-	"ADDR0      ",
-	"ADDR16     ",
-	"ADDR17     ",
-	"ADDR18     ",
-	"ADDR19     ",
-	"ADDR20     ",
-	"ADDR21     ",
-	"ADDR22     ",
-	"ADDR23     ",
-	"ADDR24     ",
-	"ADDR25     ",
-	"ADDR26     ",
-	"nGCS[1]    ",
-	"nGCS[2]    ",
-	"nGCS[3]    ",
-	"nGCS[4]    ",
-	"nGCS[5]    ",
-	"CLE        ",
-	"ALE        ",
-	"nFWE       ",
-	"nFRE       ",
-	"nRSTOUT    ",
-	"nFCE       ",
+	"ADDR0",
+	"ADDR16",
+	"ADDR17",
+	"ADDR18",
+	"ADDR19",
+	"ADDR20",
+	"ADDR21",
+	"ADDR22",
+	"ADDR23",
+	"ADDR24",
+	"ADDR25",
+	"ADDR26",
+	"nGCS[1]",
+	"nGCS[2]",
+	"nGCS[3]",
+	"nGCS[4]",
+	"nGCS[5]",
+	"CLE",
+	"ALE",
+	"nFWE",
+	"nFRE",
+	"nRSTOUT",
+	"nFCE",
 	NULL,
 	NULL
 };
 
 
 static const char * funcs_b2[] = {
-	"TOUT0      ",
-	"TOUT1      ",
-	"TOUT2      ",
-	"TOUT3      ",
-	"TCLK[0]    ",
-	"nXBACK     ",
-	"nXBREQ     ",
-	"nXDACK1    ",
-	"nXDREQ1    ",
-	"nXDACK0    ",
-	"nXDREQ0    ",
+	"TOUT0",
+	"TOUT1",
+	"TOUT2",
+	"TOUT3",
+	"TCLK[0]",
+	"nXBACK",
+	"nXBREQ",
+	"nXDACK1",
+	"nXDREQ1",
+	"nXDACK0",
+	"nXDREQ0",
 };
 static const char * funcs_b3[] = {
 	NULL,
@@ -72,29 +74,29 @@ static const char * funcs_b3[] = {
 };
 
 static const char * funcs_c2[] = {
-	"LEND       ",
-	"VCLK       ",
-	"VLINE      ",
-	"VFRAME     ",
-	"VM         ",
-	"LCD_LPCOE  ",
-	"LCD_LPCREV ",
+	"LEND",
+	"VCLK",
+	"VLINE",
+	"VFRAME",
+	"VM",
+	"LCD_LPCOE",
+	"LCD_LPCREV",
 	"LCD_LPCREVB",
-	"VD[0]      ",
-	"VD[1]      ",
-	"VD[2]      ",
-	"VD[3]      ",
-	"VD[4]      ",
-	"VD[5]      ",
-	"VD[6]      ",
-	"VD[7]      ",
+	"VD[0]",
+	"VD[1]",
+	"VD[2]",
+	"VD[3]",
+	"VD[4]",
+	"VD[5]",
+	"VD[6]",
+	"VD[7]",
 };
 static const char * funcs_c3[] = {
 	NULL,
 	NULL,
 	NULL,
 	NULL,
-	"I2SSDI     ",
+	"I2SSDI",
 	NULL,
 	NULL,
 	NULL,
@@ -109,59 +111,59 @@ static const char * funcs_c3[] = {
 };
 
 static const char * funcs_d2[] = {
-	"VD[8]      ",
-	"VD[9]      ",
-	"VD[10]     ",
-	"VD[11]     ",
-	"VD[12]     ",
-	"VD[13]     ",
-	"VD[14]     ",
-	"VD[15]     ",
-	"VD[16]     ",
-	"VD[17]     ",
-	"VD[18]     ",
-	"VD[19]     ",
-	"VD[20]     ",
-	"VD[21]     ",
-	"VD[22]     ",
-	"VD[23]     ",
+	"VD[8]",
+	"VD[9]",
+	"VD[10]",
+	"VD[11]",
+	"VD[12]",
+	"VD[13]",
+	"VD[14]",
+	"VD[15]",
+	"VD[16]",
+	"VD[17]",
+	"VD[18]",
+	"VD[19]",
+	"VD[20]",
+	"VD[21]",
+	"VD[22]",
+	"VD[23]",
 };
 static const char * funcs_d3[] = {
-	"nSPICS1    ",
-	"SPICLK1    ",
+	"nSPICS1",
+	"SPICLK1",
 	NULL,
 	NULL,
 	NULL,
 	NULL,
 	NULL,
 	NULL,
-	"SPIMISO1   ",
-	"SPIMOSI1   ",
-	"SPICLK1    ",
+	"SPIMISO1",
+	"SPIMOSI1",
+	"SPICLK1",
 	NULL,
 	NULL,
 	NULL,
-	"nSS1       ",
-	"nSS0       ",
+	"nSS1",
+	"nSS0",
 };
 
 static const char * funcs_e2[] = {
-	"I2SLRCK    ",
-	"I2SSCLK    ",
-	"CDCLK      ",
-	"I2SDI      ",
-	"I2SDO      ",
-	"SDCLK      ",
-	"SDCMD      ",
-	"SDDAT0     ",
-	"SDDAT1     ",
-	"SDDAT2     ",
-	"SDDAT3     ",
-	"SPIMISO0   ",
-	"SPIMOSI0   ",
-	"SPICLK0    ",
-	"IICSCL     ",
-	"IICSDA     ",
+	"I2SLRCK",
+	"I2SSCLK",
+	"CDCLK",
+	"I2SDI",
+	"I2SDO",
+	"SDCLK",
+	"SDCMD",
+	"SDDAT0",
+	"SDDAT1",
+	"SDDAT2",
+	"SDDAT3",
+	"SPIMISO0",
+	"SPIMOSI0",
+	"SPICLK0",
+	"IICSCL",
+	"IICSDA",
 };
 static const char * funcs_e3[] = {
 	NULL,
@@ -183,14 +185,14 @@ static const char * funcs_e3[] = {
 };
 
 static const char * funcs_f2[] = {
-	"EINT[0]    ",
-	"EINT[1]    ",
-	"EINT[2]    ",
-	"EINT[3]    ",
-	"EINT[4]    ",
-	"EINT[5]    ",
-	"EINT[6]    ",
-	"EINT[7]    ",
+	"EINT[0]",
+	"EINT[1]",
+	"EINT[2]",
+	"EINT[3]",
+	"EINT[4]",
+	"EINT[5]",
+	"EINT[6]",
+	"EINT[7]",
 };
 static const char * funcs_f3[] = {
 	NULL,
@@ -205,54 +207,54 @@ static const char * funcs_f3[] = {
 
 
 static const char * funcs_g2[] = {
-	"EINT[8]    ",
-	"EINT[9]    ",
-	"EINT[10]   ",
-	"EINT[11]   ",
-	"EINT[12]   ",
-	"EINT[13]   ",
-	"EINT[14]   ",
-	"EINT[15]   ",
-	"EINT[16]   ",
-	"EINT[17]   ",
-	"EINT[18]   ",
-	"EINT[19]   ",
-	"EINT[20]   ",
-	"EINT[21]   ",
-	"EINT[22]   ",
-	"EINT[23]   ",
+	"EINT[8]",
+	"EINT[9]",
+	"EINT[10]",
+	"EINT[11]",
+	"EINT[12]",
+	"EINT[13]",
+	"EINT[14]",
+	"EINT[15]",
+	"EINT[16]",
+	"EINT[17]",
+	"EINT[18]",
+	"EINT[19]",
+	"EINT[20]",
+	"EINT[21]",
+	"EINT[22]",
+	"EINT[23]",
 };
 static const char * funcs_g3[] = {
 	NULL,
 	NULL,
-	"nSS0       ",
-	"nSS1       ",
-	"LCD_PWRDN  ",
-	"SPIMISO1   ",
-	"SPIMOSI1   ",
-	"SPICLK1    ",
+	"nSS0",
+	"nSS1",
+	"LCD_PWRDN",
+	"SPIMISO1",
+	"SPIMOSI1",
+	"SPICLK1",
 	NULL,
-	"nRTS1      ",
-	"nCTS1      ",
-	"TCLK[1]    ",
-	"nSPICS0    ",
+	"nRTS1",
+	"nCTS1",
+	"TCLK[1]",
+	"nSPICS0",
 	NULL,
 	NULL,
 	NULL,
 };
 
 static const char * funcs_h2[] = {
-	"nCTS0      ",
-	"nRTS0      ",
-	"TXD[0]     ",
-	"RXD[0]     ",
-	"TXD[1]     ",
-	"RXD[1]     ",
-	"TXD[2]     ",
-	"RXD[2]     ",
-	"UEXTCLK    ",
-	"CLKOUT0    ",
-	"CLKOUT1    ",
+	"nCTS0",
+	"nRTS0",
+	"TXD[0]",
+	"RXD[0]",
+	"TXD[1]",
+	"RXD[1]",
+	"TXD[2]",
+	"RXD[2]",
+	"UEXTCLK",
+	"CLKOUT0",
+	"CLKOUT1",
 };
 static const char * funcs_h3[] = {
 	NULL,
@@ -261,27 +263,27 @@ static const char * funcs_h3[] = {
 	NULL,
 	NULL,
 	NULL,
-	"nRTS1      ",
-	"nCTS1      ",
+	"nRTS1",
+	"nCTS1",
 	NULL,
-	"nSPICS0    ",
+	"nSPICS0",
 	NULL,
 };
 
 static const char * funcs_j2[] = {
-	"CAMDATA[0] ",
-	"CAMDATA[1] ",
-	"CAMDATA[2] ",
-	"CAMDATA[3] ",
-	"CAMDATA[4] ",
-	"CAMDATA[5] ",
-	"CAMDATA[6] ",
-	"CAMDATA[7] ",
-	"CAMPCLK    ",
-	"CAMVSYNC   ",
-	"CAMHREF    ",
-	"CAMCLKOUT  ",
-	"CAMRESET   ",
+	"CAMDATA[0]",
+	"CAMDATA[1]",
+	"CAMDATA[2]",
+	"CAMDATA[3]",
+	"CAMDATA[4]",
+	"CAMDATA[5]",
+	"CAMDATA[6]",
+	"CAMDATA[7]",
+	"CAMPCLK",
+	"CAMVSYNC",
+	"CAMHREF",
+	"CAMCLKOUT",
+	"CAMRESET",
 };
 static const char * funcs_j3[] = {
 	NULL,
@@ -374,6 +376,8 @@ static struct reg* get_reg_cfg(int regnum)
     return NULL;
 }
 
+#define LINE_SIZE 5000
+
 static void pretty_dump(uint32_t cfg, uint32_t state, uint32_t pull,
 			const char ** function_names_2,
 			const char ** function_names_3,
@@ -386,6 +390,16 @@ static void pretty_dump(uint32_t cfg, uint32_t state, uint32_t pull,
 		   *tag_pulldown = NULL,
 		   * level0 = "0",
 		   * level1 = "1";
+
+    char line0[LINE_SIZE];
+    char line1[LINE_SIZE];
+    char line2[LINE_SIZE];
+    char num[3];
+    int i;
+    
+    snprintf(line0, LINE_SIZE, " ");
+    snprintf(line1, LINE_SIZE, " ");
+    snprintf(line2, LINE_SIZE, " ");
 
 	for (n = 0; n < count; n++) {
 		switch ((cfg >> (2 * n)) & 3) {
@@ -424,10 +438,27 @@ static void pretty_dump(uint32_t cfg, uint32_t state, uint32_t pull,
 			tag_pulldown = "";
 		else
 			tag_pulldown = "(pulldown)";
+
+        strncat(line0, "GP", LINE_SIZE);
+        strncat(line0,  prefix, LINE_SIZE);
+        snprintf(num, 3, "%02d", n);
+        strncat(line0, num, LINE_SIZE);
+        strncat(line0, "      ", LINE_SIZE);
+
+        strncat(line1, tag_type, LINE_SIZE);
+        for(i=0; i<11-strlen(tag_type); i++)
+            strncat(line1, " ", LINE_SIZE);
+
+        strncat(line2, tag_state, LINE_SIZE);
+        strncat(line2, "          ", LINE_SIZE);
+        
        
-		printf("GP%s%02d: %s %s \n", prefix, n, tag_type,
-						      tag_state);
+		//printf("GP%s%02d: %s %s \n", prefix, n, tag_type,
+		//				      tag_state);
 	}
+    printf("%s\n", line0);
+    printf("%s\n", line1);
+    printf("%s\n", line2);
 	printf("\n");
 }
 
@@ -441,6 +472,18 @@ static void pretty_dump_a(uint32_t cfg, uint32_t state,
 		   *tag_state = NULL,
 		   * level0 = "0",
 		   * level1 = "1";
+    
+    char line0[LINE_SIZE];
+    char line1[LINE_SIZE];
+    char line2[LINE_SIZE];
+    char num[3];
+    int i;
+    
+    snprintf(line0, LINE_SIZE, " ");
+    snprintf(line1, LINE_SIZE, " ");
+    snprintf(line2, LINE_SIZE, " ");
+
+
 
 	for (n = 0; n < count; n++) {
 		switch ((cfg >> n) & 1) {
@@ -462,9 +505,27 @@ static void pretty_dump_a(uint32_t cfg, uint32_t state,
 		else
 			tag_state = level0;
 
-		printf("GP%s%02d: %s %s\n", prefix, n, tag_type,
-						   tag_state);
+        strncat(line0, "GP", LINE_SIZE);
+        strncat(line0,  prefix, LINE_SIZE);
+        snprintf(num, 3, "%02i", n);
+        strncat(line0, num, LINE_SIZE);
+        strncat(line0, "      ", LINE_SIZE);
+
+        strncat(line1, tag_type, LINE_SIZE);
+        for(i=0; i<11-strlen(tag_type); i++)
+            strncat(line1, " ", LINE_SIZE);
+
+        strncat(line2, tag_state, LINE_SIZE);
+        strncat(line2, "          ", LINE_SIZE);
+        
+
+
+		//printf("GP%s%02d: %s %s\n", prefix, n, tag_type,
+	//					   tag_state);
 	}
+    printf("%s\n", line0);
+    printf("%s\n", line1);
+    printf("%s\n", line2);
 	printf("\n");
 }
 
