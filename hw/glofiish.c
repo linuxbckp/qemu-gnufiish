@@ -121,6 +121,15 @@ static const int glofiish_ts_scale[6] = {
     (940 - 75) * 256 / 1021, 0, 75 * 256 * 32,
 };
 
+#define GLOFIISH_FM_ADDR 0x10
+
+static void glofiish_i2c_setup(struct glofiish_s *board)
+{
+    i2c_bus *bus = s3c_i2c_bus(board->cpu->i2c);
+
+    
+}
+
 /* Board init.  */
 static struct glofiish_s *glofiish_init_common(int ram_size,
                 const char *kernel_filename, const char *cpu_model,
@@ -188,6 +197,6 @@ QEMUMachine glofiish_machine = {
     "glofiish",
     "E-Ten glofiish smartphone M800/X800 (S3C2442A)",
     .init = glofiish_init,
-    .ram_require = (0x04000000 + S3C_SRAM_SIZE) | RAMSIZE_FIXED
+/*    .ram_require = (0x04000000 + S3C_SRAM_SIZE) | RAMSIZE_FIXED */
 };
 
