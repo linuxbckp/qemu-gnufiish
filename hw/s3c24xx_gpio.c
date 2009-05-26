@@ -13,6 +13,37 @@
 
 #include <stdlib.h>
 
+/* S3C2410 : A B C D E F G H  = 8
+ * S3C2440 : J = 1 */
+#define S3C_IO_BANKS	9
+
+struct s3c_gpio_state_s {	/* Modelled as an interrupt controller */
+	uint32_t cpu_id;
+    target_phys_addr_t base;
+    qemu_irq *pic;
+    qemu_irq *in;
+
+    struct {
+        int n;
+        uint32_t con;
+        uint32_t dat;
+        uint32_t up;
+        uint32_t mask;
+        qemu_irq handler[32];
+    } bank[S3C_IO_BANKS];
+
+    uint32_t inform[2];
+    uint32_t pwrstat;
+    uint32_t misccr;
+    uint32_t dclkcon;
+    uint32_t extint[3];
+    uint32_t eintflt[2];
+    uint32_t eintmask;
+    uint32_t eintpend;
+};
+
+struct s3c_gpio_state_s cache;
+
 /*
  * Stuff for dumping GPIO configuration
  */
@@ -369,7 +400,8 @@ static struct reg* get_reg_cfg(int regnum)
 {
     int n;
     for(n = 0; n < 10; n++) {
-        if(reg_cfg[n].postfix == regnum) {
+        if(reg_cfg[n].postfix == regnum ||
+           reg_cfg[n].postfix == regnum + 1) {
             return &reg_cfg[n];
         }
     }
@@ -378,185 +410,175 @@ static struct reg* get_reg_cfg(int regnum)
 
 #define LINE_SIZE 5000
 
-static void pretty_dump(uint32_t cfg, uint32_t state, uint32_t pull,
+/*static void pretty_dump(uint32_t cfg, uint32_t state, uint32_t pull,
 			const char ** function_names_2,
 			const char ** function_names_3,
 			const char * prefix,
-			int count)
+			int count)*/
+static void pretty_dump(struct s3c_gpio_state_s *state, 
+                        struct s3c_gpio_state_s *state_cache,
+                        int bank,
+                        int con,
+                        int write,
+                        const char ** function_names_2,
+                        const char ** function_names_3,
+                        const char *  prefix,
+                        int count,
+                        int *changed)
 {
 	int n;
-	const char *tag_type = NULL,
+	uint32_t cfg, dat, pull;
+    const char *tag_type = NULL,
 		   *tag_state = NULL,
 		   *tag_pulldown = NULL,
 		   * level0 = "0",
 		   * level1 = "1";
 
-    char line0[LINE_SIZE];
-    char line1[LINE_SIZE];
-    char line2[LINE_SIZE];
-    char num[3];
-    int i;
+    cfg = state->bank[bank].con;
+    dat = state->bank[bank].dat;
+    pull = state->bank[bank].up;
     
-    snprintf(line0, LINE_SIZE, " ");
-    snprintf(line1, LINE_SIZE, " ");
-    snprintf(line2, LINE_SIZE, " ");
+    *changed = 0;
 
-	for (n = 0; n < count; n++) {
-		switch ((cfg >> (2 * n)) & 3) {
-		case 0:
-			tag_type = "input      ";
-			break;
-		case 1:
-			tag_type = "OUTPUT     ";
-			break;
-		case 2:
-			if (function_names_2) {
-				if (function_names_2[n])
-					tag_type = function_names_2[n];
-				else
-					tag_type = "*** ILLEGAL CFG (2) *** ";
-			} else
-				tag_type = "(function) ";
-			break;
-		default:
-			if (function_names_3) {
-				if (function_names_3[n])
-					tag_type = function_names_3[n];
-				else
-					tag_type = "*** ILLEGAL CFG (3) *** ";
-			} else
-				tag_type = "(function) ";
-			break;
-		}
-		if ((state >> n) & 1)
-			tag_state = level1;
-		else
-			tag_state = level0;
+    for(n = 0; n < count; n++) {
+        /* If nothing has changed continue with the next pin */
+        if ( (((cfg >> (2 * n)) & 3) == ((state_cache->bank[bank].con >> (2 * n)) & 3)) &&
+             (((dat >> n) & 1) == ((state_cache->bank[bank].dat >> n) & 1)))
+            continue;
 
+        if(!*changed) {
+            if(con)
+                printf("GP%cCON: ", 'A' + bank);
+            else 
+                printf("GP%cDAT: ", 'A' + bank);
+        }
+
+        *changed = 1;
         
-		if (((pull >> n) & 1))
-			tag_pulldown = "";
-		else
-			tag_pulldown = "(pulldown)";
-
-        strncat(line0, "GP", LINE_SIZE);
-        strncat(line0,  prefix, LINE_SIZE);
-        snprintf(num, 3, "%02d", n);
-        strncat(line0, num, LINE_SIZE);
-        strncat(line0, "      ", LINE_SIZE);
-
-        strncat(line1, tag_type, LINE_SIZE);
-        for(i=0; i<11-strlen(tag_type); i++)
-            strncat(line1, " ", LINE_SIZE);
-
-        strncat(line2, tag_state, LINE_SIZE);
-        strncat(line2, "          ", LINE_SIZE);
+        switch((cfg >> (2 * n)) & 3) {
+        case 0:
+            tag_type = "in";
+            break;
+        case 1:
+            tag_type = "out";
+            break;
+        case 2:
+            if(function_names_2) {
+                if(function_names_2[n])
+                    tag_type = function_names_2[n];
+                else 
+                    tag_type = "ILLEGAL_CFG";
+            } else
+                tag_type = "function";
+            break;
+        default:
+            if(function_names_3) {
+                if(function_names_3[n])
+                    tag_type = function_names_3[n];
+                else
+                    tag_type = "ILLEGAL_CFG";
+            } else
+                tag_type = "function";
+            break;
+        }
         
-       
-		//printf("GP%s%02d: %s %s \n", prefix, n, tag_type,
-		//				      tag_state);
-	}
-    printf("%s\n", line0);
-    printf("%s\n", line1);
-    printf("%s\n", line2);
-	printf("\n");
+        if((dat >> n) & 1)
+            tag_state = level1;
+        else 
+            tag_state = level0;
+        
+        if(((pull >> n) & 1))
+            tag_pulldown = "";
+        else
+            tag_pulldown = "pulldown";
+        
+        printf("GP%s%02d(%s)=%s ", prefix, n, tag_type, tag_state);
+    }
+
+    if(*changed)
+        printf("\n");
 }
 
-static void pretty_dump_a(uint32_t cfg, uint32_t state,
+/*static void pretty_dump_a(uint32_t cfg, uint32_t state,
 			  const char ** function_names,
 			  const char * prefix,
-			  int count)
+			  int count)*/
+static void pretty_dump_a(struct s3c_gpio_state_s *state,
+                          struct s3c_gpio_state_s *state_cache,
+                          int bank,
+                          int con,
+                          int write,
+                          const char ** function_names,
+                          const char * prefix,
+                          int count,
+                          int *changed)
 {
 	int n;
+    uint32_t cfg, dat;
 	const char *tag_type = NULL,
 		   *tag_state = NULL,
 		   * level0 = "0",
 		   * level1 = "1";
-    
-    char line0[LINE_SIZE];
-    char line1[LINE_SIZE];
-    char line2[LINE_SIZE];
-    char num[3];
-    int i;
-    
-    snprintf(line0, LINE_SIZE, " ");
-    snprintf(line1, LINE_SIZE, " ");
-    snprintf(line2, LINE_SIZE, " ");
+ 
+    cfg = state->bank[bank].con;
+    dat = state->bank[bank].dat;
 
-
+    *changed = 0;
 
 	for (n = 0; n < count; n++) {
+        /* If nothing has changed continue with the next pin */
+        if ( (((cfg >> (2 * n)) & 3) == ((state_cache->bank[bank].con >> (2 * n)) & 3)) &&
+             (((dat >> n) & 1) == ((state_cache->bank[bank].dat >> n) & 1)))
+            continue;
+
+        if(!*changed) {
+            if(con)
+                printf("GP%cCON: ", 'A' + bank);
+            else
+                printf("GP%cDAT: ", 'A' + bank);
+        }
+
+        *changed = 1;
+
 		switch ((cfg >> n) & 1) {
-		case 0:
-			tag_type = "OUTPUT     ";
+        case 0: 
+            tag_type = "in";
+            break; 
+		case 1:
+			tag_type = "out";
 			break;
 		default:
 			if (function_names) {
 				if (function_names[n])
 					tag_type = function_names[n];
 				else
-					tag_type = "*** ILLEGAL CFG *** ";
+					tag_type = "ILLEGAL_CFG";
 			} else
-				tag_type = "(function) ";
+				tag_type = "function";
 			break;
 		}
-		if ((state >> n) & 1)
+		if ((dat >> n) & 1)
 			tag_state = level1;
 		else
 			tag_state = level0;
-
-        strncat(line0, "GP", LINE_SIZE);
-        strncat(line0,  prefix, LINE_SIZE);
-        snprintf(num, 3, "%02i", n);
-        strncat(line0, num, LINE_SIZE);
-        strncat(line0, "      ", LINE_SIZE);
-
-        strncat(line1, tag_type, LINE_SIZE);
-        for(i=0; i<11-strlen(tag_type); i++)
-            strncat(line1, " ", LINE_SIZE);
-
-        strncat(line2, tag_state, LINE_SIZE);
-        strncat(line2, "          ", LINE_SIZE);
         
-
-
-		//printf("GP%s%02d: %s %s\n", prefix, n, tag_type,
-	//					   tag_state);
+        printf("GP%s%02d(%s)=%s ", prefix, n, tag_type, tag_state);
 	}
-    printf("%s\n", line0);
-    printf("%s\n", line1);
-    printf("%s\n", line2);
-	printf("\n");
+
+    if(*changed)
+        printf("\n");
 }
 
-/* S3C2410 : A B C D E F G H  = 8
- * S3C2440 : J = 1 */
-#define S3C_IO_BANKS	8
-
-struct s3c_gpio_state_s {	/* Modelled as an interrupt controller */
-	uint32_t cpu_id;
-    target_phys_addr_t base;
-    qemu_irq *pic;
-    qemu_irq *in;
-
-    struct {
-        int n;
-        uint32_t con;
-        uint32_t dat;
-        uint32_t up;
-        uint32_t mask;
-        qemu_irq handler[32];
-    } bank[S3C_IO_BANKS];
-
-    uint32_t inform[2];
-    uint32_t pwrstat;
-    uint32_t misccr;
-    uint32_t dclkcon;
-    uint32_t extint[3];
-    uint32_t eintflt[2];
-    uint32_t eintmask;
-    uint32_t eintpend;
-};
+static void cache_state(struct s3c_gpio_state_s *state, struct s3c_gpio_state_s *cache) {
+    int n;
+    for(n=0; n<S3C_IO_BANKS; n++) {
+        cache->bank[n].n = state->bank[n].n;
+        cache->bank[n].con = state->bank[n].con;
+        cache->bank[n].dat = state->bank[n].dat;
+        cache->bank[n].up = state->bank[n].up;
+        cache->bank[n].mask = state->bank[n].mask;
+    }
+}
 
 static void dump_register(void *opaque, int bank, int read, int conf)
 {
@@ -565,30 +587,30 @@ static void dump_register(void *opaque, int bank, int read, int conf)
     const char *port = "port",
          *configuration = "con",
          *destination = NULL;
+    int changed = 0;
     
     if(conf)
         destination = configuration;
     else
         destination = port;
 
-    if(read)
-        printf("read %s:\n", destination);
-    else 
-        printf("write %s:\n", destination);
-    printf("================================\n");
-
     r = get_reg_cfg('A' + bank);
-    if(!r)
+    if(!r) {
+
+        printf("bank=%i A+%i=%c\n",bank,bank,'A'+bank);
         printf("no configuration for register\n");
+    }
     if(r && bank > 0)
-        pretty_dump(s->bank[bank].con,
+        pretty_dump(s, &cache, bank, conf, read, r->func_names2, r->func_names3, &r->postfix, r->num, &changed); 
+        /*pretty_dump(s->bank[bank].con,
                     s->bank[bank].dat, 
                     s->bank[bank].up, r->func_names2, 
-                    r->func_names3, &r->postfix, r->num);
+                    r->func_names3, &r->postfix, r->num);*/
     else if(r && bank == 0)
-        pretty_dump_a(s->bank[bank].con,
+        pretty_dump_a(s, &cache, bank, conf, read, r->func_names2, &r->postfix, r->num, &changed);
+        /*pretty_dump_a(s->bank[bank].con,
                       s->bank[bank].dat,
-                      r->func_names2, &r->postfix, r->num);
+                      r->func_names2, &r->postfix, r->num);*/
 }
 
 static inline void s3c_gpio_extint(struct s3c_gpio_state_s *s, int irq)
@@ -739,7 +761,10 @@ static uint32_t s3c_gpio_read(void *opaque, target_phys_addr_t addr)
         bank = addr >> 4;
         addr &= 0xf;
     }
-
+    else if((addr >> 4) - 5 < S3C_IO_BANKS) {
+        bank = (addr >> 4) - 5;
+        addr &= 0xf;
+    }
     switch (addr) {
     case S3C_GSTATUS0:
         return 0x0;
@@ -772,10 +797,10 @@ static uint32_t s3c_gpio_read(void *opaque, target_phys_addr_t addr)
     /* Per bank registers */
     case S3C_GPCON:
         //printf("%s: read con '%c' (%i) = %08x\n", __FUNCTION__, 'A' + bank, bank, s->bank[bank].con);
-        dump_register(s, bank, 1, 1);
+        //dump_register(s, bank, 1, 1);
         return s->bank[bank].con;
     case S3C_GPDAT:
-        dump_register(s, bank, 1, 0);
+        //dump_register(s, bank, 1, 0);
         //printf("%s: read port '%c' (%i) = %08x\n", __FUNCTION__, 'A' + bank, bank, s->bank[bank].dat); 
         return s->bank[bank].dat;
     case S3C_GPUP:
@@ -795,6 +820,10 @@ static void s3c_gpio_write(void *opaque, target_phys_addr_t addr,
     int ln, bank = 0;
     if ((addr >> 4) < S3C_IO_BANKS) {
         bank = addr >> 4;
+        addr &= 0xf;
+    }
+    else if((addr >> 4) - 5 < S3C_IO_BANKS) {
+        bank = (addr >> 4) - 5;
         addr &= 0xf;
     }
 
@@ -846,11 +875,13 @@ static void s3c_gpio_write(void *opaque, target_phys_addr_t addr,
         //printf("%s: GP%cDAT: %08x\n", __FUNCTION__,'A' + bank, s->bank[bank].dat);
         s->bank[bank].con = value;
         dump_register(s, bank, 0, 1);
+        cache_state(s, &cache);
         break;
     case S3C_GPDAT:
         diff = (s->bank[bank].dat ^ value) & s->bank[bank].mask;
         s->bank[bank].dat = value;
         dump_register(s, bank, 0, 0);
+        cache_state(s, &cache);
         //printf("%s: write port '%c' (%i) = %08x\n", __FUNCTION__, 'A' + bank, bank, s->bank[bank].dat);
         while ((ln = ffs(diff))) {
             ln --;
@@ -954,8 +985,10 @@ struct s3c_gpio_state_s *s3c_gpio_init(target_phys_addr_t base, qemu_irq *pic, u
     s->bank[5].n = 8;
     s->bank[6].n = 16;
     s->bank[7].n = 11;
+    s->bank[8].n = 13;
 
     s3c_gpio_reset(s);
+    cache_state(s, &cache);
 
     iomemtype = cpu_register_io_memory(0, s3c_gpio_readfn,
                     s3c_gpio_writefn, s);
