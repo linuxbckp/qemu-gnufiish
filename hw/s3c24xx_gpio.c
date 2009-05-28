@@ -490,9 +490,9 @@ static void pretty_dump(struct s3c_gpio_state_s *state,
         if(((pull >> n) & 1))
             tag_pulldown = "";
         else
-            tag_pulldown = "pulldown";
+            tag_pulldown = "pulldown ";
         
-        printf("GP%s%02d(%s)=%s ", prefix, n, tag_type, tag_state);
+        printf("GP%s%02d(%s)=%s %s", prefix, n, tag_type, tag_state,tag_pulldown);
     }
 
     if(*changed)
