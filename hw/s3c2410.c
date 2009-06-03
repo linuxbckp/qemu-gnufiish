@@ -17,6 +17,7 @@
 #include "i2c.h"
 #include "pxa.h"
 #include "sysemu.h"
+#include "llhwl.h"
 
 /* Interrupt controller */
 struct s3c_pic_state_s {
@@ -386,6 +387,11 @@ static uint32_t s3c_mc_read(void *opaque, target_phys_addr_t addr)
 {
     struct s3c_state_s *s = (struct s3c_state_s *) opaque;
 
+#ifdef CONFIG_LLHWL
+    llhwl_report_event_data_put(LLHWL_EVENT_MC_READ, &addr);
+    llhwl_report_event(LLHWL_EVENT_MC_READ, s);
+#endif
+
     switch (addr >> 2) {
     case S3C_BWSCON ... S3C_MRSRB7:
         return s->mc_regs[addr >> 2];
@@ -400,6 +406,12 @@ static void s3c_mc_write(void *opaque, target_phys_addr_t addr,
                 uint32_t value)
 {
     struct s3c_state_s *s = (struct s3c_state_s *) opaque;
+
+#ifdef CONFIG_LLHWL
+    llhwl_report_event_data_put(LLHWL_EVENT_MC_WRITE, &value);
+    llhwl_report_event_data_put(LLHWL_EVENT_MC_WRITE, &addr);
+    llhwl_report_event(LLHWL_EVENT_MC_WRITE, s);
+#endif
 
     switch (addr >> 2) {
     case S3C_BWSCON ... S3C_MRSRB7:
@@ -510,6 +522,10 @@ static uint32_t s3c_clkpwr_read(void *opaque, target_phys_addr_t addr)
 {
     struct s3c_state_s *s = (struct s3c_state_s *) opaque;
 
+#ifdef CONFIG_LLHWL
+    llhwl_report_event_data_put(LLHWL_EVENT_CLKPWR_READ, &addr);
+    llhwl_report_event(LLHWL_EVENT_CLKPWR_READ, s);
+#endif
     switch (addr) {
     case S3C_LOCKTIME ... S3C_CLKDIVN:
         return s->clkpwr_regs[addr >> 2];
@@ -527,6 +543,12 @@ static void s3c_clkpwr_write(void *opaque, target_phys_addr_t addr,
                 uint32_t value)
 {
     struct s3c_state_s *s = (struct s3c_state_s *) opaque;
+
+#ifdef CONFIG_LLHWL
+    llhwl_report_event_data_put(LLHWL_EVENT_CLKPWR_WRITE, &value);
+    llhwl_report_event_data_put(LLHWL_EVENT_CLKPWR_WRITE, &addr);
+    llhwl_report_event(LLHWL_EVENT_CLKPWR_WRITE, s);
+#endif
 
     switch (addr) {
     case S3C_LOCKTIME:
@@ -729,6 +751,11 @@ static uint32_t s3c_dma_read(void *opaque, target_phys_addr_t addr)
     struct s3c_dma_state_s *s = (struct s3c_dma_state_s *) opaque;
     struct s3c_dma_ch_state_s *ch = 0;
 
+#ifdef CONFIG_LLHWL
+    llhwl_report_event_data_put(LLHWL_EVENT_DMA_READ, &addr);
+    llhwl_report_event(LLHWL_EVENT_DMA_READ, s);
+#endif
+
     if (addr >= 0 && addr <= (S3C_DMA_CH_N << 6)) {
         ch = &s->ch[addr >> 6];
         addr &= 0x3f;
@@ -765,6 +792,12 @@ static void s3c_dma_write(void *opaque, target_phys_addr_t addr,
 {
     struct s3c_dma_state_s *s = (struct s3c_dma_state_s *) opaque;
     struct s3c_dma_ch_state_s *ch = 0;
+
+#ifdef CONFIG_LLHWL
+    llhwl_report_event_data_put(LLHWL_EVENT_DMA_WRITE, &value);
+    llhwl_report_event_data_put(LLHWL_EVENT_DMA_WRITE, &addr);
+    llhwl_report_event(LLHWL_EVENT_DMA_WRITE, s);
+#endif
 
     if (addr >= 0 && addr <= (S3C_DMA_CH_N << 6)) {
         ch = &s->ch[addr >> 6];
@@ -1016,6 +1049,11 @@ static uint32_t s3c_timers_read(void *opaque, target_phys_addr_t addr)
     struct s3c_timers_state_s *s = (struct s3c_timers_state_s *) opaque;
     int tm = 0;
 
+#ifdef CONFIG_LLHWL
+    llhwl_report_event_data_put(LLHWL_EVENT_TIMERS_READ, &addr);
+    llhwl_report_event(LLHWL_EVENT_TIMERS_READ, s);
+#endif
+
     switch (addr) {
     case S3C_TCFG0:
         return s->config[0];
@@ -1052,6 +1090,12 @@ static void s3c_timers_write(void *opaque, target_phys_addr_t addr,
 {
     struct s3c_timers_state_s *s = (struct s3c_timers_state_s *) opaque;
     int tm = 0;
+
+#ifdef CONFIG_LLHWL
+    llhwl_report_event_data_put(LLHWL_EVENT_TIMERS_WRITE, &value);
+    llhwl_report_event_data_put(LLHWL_EVENT_TIMERS_WRITE, &addr);
+    llhwl_report_event(LLHWL_EVENT_TIMERS_WRITE, s);
+#endif
 
     switch (addr) {
     case S3C_TCFG0:
@@ -1378,6 +1422,11 @@ static uint32_t s3c_uart_read(void *opaque, target_phys_addr_t addr)
     struct s3c_uart_state_s *s = (struct s3c_uart_state_s *) opaque;
     uint8_t ret;
 
+#ifdef CONFIG_LLHWL
+    llhwl_report_event_data_put(LLHWL_EVENT_UART_READ, &addr);
+    llhwl_report_event(LLHWL_EVENT_UART_READ, s);
+#endif
+
     switch (addr) {
     case S3C_ULCON:
         return s->lcontrol;
@@ -1430,6 +1479,12 @@ static void s3c_uart_write(void *opaque, target_phys_addr_t addr,
     struct s3c_uart_state_s *s = (struct s3c_uart_state_s *) opaque;
     uint8_t ch;
     int i;
+
+#ifdef CONFIG_LLHWL
+    llhwl_report_event_data_put(LLHWL_EVENT_UART_WRITE, &value);
+    llhwl_report_event_data_put(LLHWL_EVENT_UART_WRITE, &addr);
+    llhwl_report_event(LLHWL_EVENT_UART_WRITE, s);
+#endif
 
     switch (addr) {
     case S3C_ULCON:
@@ -1922,6 +1977,11 @@ static uint32_t s3c_i2c_read(void *opaque, target_phys_addr_t addr)
 {
     struct s3c_i2c_state_s *s = (struct s3c_i2c_state_s *) opaque;
 
+#ifdef CONFIG_LLHWL
+    llhwl_report_event_data_put(LLHWL_EVENT_I2C_READ, &addr);
+    llhwl_report_event(LLHWL_EVENT_I2C_READ, s);
+#endif
+    
     switch (addr) {
     case S3C_IICCON:
         return s->control;
@@ -1944,6 +2004,12 @@ static void s3c_i2c_write(void *opaque, target_phys_addr_t addr,
                 uint32_t value)
 {
     struct s3c_i2c_state_s *s = (struct s3c_i2c_state_s *) opaque;
+
+#ifdef CONFIG_LLHWL
+    llhwl_report_event_data_put(LLHWL_EVENT_I2C_WRITE, &value);
+    llhwl_report_event_data_put(LLHWL_EVENT_I2C_WRITE, &addr);
+    llhwl_report_event(LLHWL_EVENT_I2C_WRITE, s);
+#endif
 
     switch (addr) {
     case S3C_IICCON:
@@ -2077,6 +2143,10 @@ struct s3c_spi_state_s {
 
 static void s3c_spi_update(struct s3c_spi_state_s *s)
 {
+#ifdef LLHWL
+    llhwl_report_event(LLHWL_EVENT_SPI_UPDATE, s);
+#endif
+
     int i;
     for (i = 0; i < 2; i ++) {
         switch ((s->chan[i].control >> 5) & 3) {		/* SMOD */
@@ -2092,6 +2162,9 @@ static void s3c_spi_update(struct s3c_spi_state_s *s)
 
 static void s3c_spi_reset(struct s3c_spi_state_s *s)
 {
+#ifdef CONFIG_LLHWL
+    llhwl_report_event(LLHWL_EVENT_SPI_RESET, s);
+#endif
     memset(s->chan, 0, sizeof(s->chan));
     s->chan[0].pin = 0x02;
     s->chan[1].pin = 0x02;
@@ -2115,6 +2188,11 @@ static uint32_t s3c_spi_read(void *opaque, target_phys_addr_t addr)
 {
     struct s3c_spi_state_s *s = (struct s3c_spi_state_s *) opaque;
     int ch;
+
+#ifdef CONFIG_LLHWL
+    llhwl_report_event_data_put(LLHWL_EVENT_SPI_READ, &addr);
+    llhwl_report_event(LLHWL_EVENT_SPI_READ, s);
+#endif
 
     ch = addr >> 5;
 
@@ -2158,6 +2236,12 @@ static void s3c_spi_write(void *opaque, target_phys_addr_t addr,
 {
     struct s3c_spi_state_s *s = (struct s3c_spi_state_s *) opaque;
     int ch;
+
+#ifdef CONFIG_LLHWL
+    llhwl_report_event_data_put(LLHWL_EVENT_SPI_WRITE, &value);
+    llhwl_report_event_data_put(LLHWL_EVENT_SPI_WRITE, &addr);
+    llhwl_report_event(LLHWL_EVENT_SPI_WRITE, s);
+#endif
 
     ch = addr >> 5;
 
@@ -2405,6 +2489,11 @@ static uint32_t s3c_i2s_read(void *opaque, target_phys_addr_t addr)
     struct s3c_i2s_state_s *s = (struct s3c_i2s_state_s *) opaque;
     uint32_t ret;
 
+#ifdef CONFIG_LLHWL
+    llhwl_report_event_data_put(LLHWL_EVENT_I2S_READ, &addr);
+    llhwl_report_event(LLHWL_EVENT_I2S_READ, s);
+#endif
+
     switch (addr) {
     case S3C_IISCON:
         return s->control;
@@ -2438,6 +2527,12 @@ static void s3c_i2s_write(void *opaque, target_phys_addr_t addr,
                 uint32_t value)
 {
     struct s3c_i2s_state_s *s = (struct s3c_i2s_state_s *) opaque;
+
+#ifdef CONFIG_LLHWL
+    llhwl_report_event_data_put(LLHWL_EVENT_I2S_WRITE, &value);
+    llhwl_report_event_data_put(LLHWL_EVENT_I2S_WRITE, &addr);
+    llhwl_report_event(LLHWL_EVENT_I2S_WRITE, s);
+#endif
 
     switch (addr) {
     case S3C_IISCON:

@@ -681,6 +681,9 @@ endif
 ifdef CONFIG_SLIRP
 CPPFLAGS+=-I$(SRC_PATH)/slirp
 endif
+ifdef CONFIG_LLHWL
+OBJS+= llhwl.o llhwl_trigger.o llhwl_trigger_gpio.o
+endif
 
 LIBS+=$(PTHREADLIBS)
 LIBS+=$(CLOCKLIBS)

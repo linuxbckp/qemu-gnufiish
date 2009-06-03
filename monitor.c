@@ -28,6 +28,7 @@
 #include "hw/pc.h"
 #include "hw/pci.h"
 #include "hw/watchdog.h"
+#include "hw/llhwl.h"
 #include "gdbstub.h"
 #include "net.h"
 #include "qemu-char.h"
@@ -1658,6 +1659,20 @@ static void do_acl(Monitor *mon,
     }
 }
 
+static void do_llhwl(Monitor *mon, const char *command) 
+{
+    if(strncmp(command, "enable", strlen(command)) == 0) {
+        llhwl_enable(1);
+    }
+    else if(strncmp(command, "disable", strlen(command)) == 0) {
+        llhwl_enable(0);
+    }
+    else
+        monitor_printf(mon, "llhwl: unknown command '%s'\n", command);
+}
+
+
+
 /* Please update qemu-doc.texi when adding or changing commands */
 static const mon_cmd_t mon_cmds[] = {
     { "help|?", "s?", help_cmd,
@@ -1774,6 +1789,11 @@ static const mon_cmd_t mon_cmds[] = {
                                "acl allow vnc.username fred\n"
                                "acl deny vnc.username bob\n"
                                "acl reset vnc.username\n" },
+#ifdef CONFIG_LLHWL
+    { "llhwl", "s", do_llhwl, "<command>\n",
+                              "llhwl enable\n",
+                              "llhwl disable\n"},
+#endif
     { NULL, NULL, },
 };
 

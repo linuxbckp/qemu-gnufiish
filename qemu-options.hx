@@ -1575,3 +1575,8 @@ DEF("semihosting", 0, QEMU_OPTION_semihosting,
 DEF("old-param", 0, QEMU_OPTION_old_param,
     "-old-param      old param mode\n")
 #endif
+
+#if defined(CONFIG_LLHWL)
+DEF("llhwl", 0, QEMU_OPTION_llhwl,
+    "-llhwl    low level hardware logging (for reverse engineering)\n")
+#endif

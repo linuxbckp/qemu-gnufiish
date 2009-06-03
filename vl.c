@@ -167,6 +167,10 @@ int main(int argc, char **argv)
 #include "libslirp.h"
 #endif
 
+#if defined(CONFIG_LLHWL)
+#include "hw/llhwl.h"
+#endif
+
 //#define DEBUG_UNUSED_IOPORT
 //#define DEBUG_IOPORT
 //#define DEBUG_NET
@@ -285,6 +289,10 @@ static int64_t qemu_icount_bias;
 static QEMUTimer *icount_rt_timer;
 static QEMUTimer *icount_vm_timer;
 static QEMUTimer *nographic_timer;
+
+#ifdef CONFIG_LLHWL
+int llhwl = 0;
+#endif
 
 uint8_t qemu_uuid[16];
 
@@ -4885,6 +4893,10 @@ int main(int argc, char **argv, char **envp)
     translation = BIOS_ATA_TRANSLATION_AUTO;
     monitor_device = "vc:80Cx24C";
 
+#ifdef CONFIG_LLHWL
+    llhwl = 0;
+#endif
+
     serial_devices[0] = "vc:80Cx24C";
     for(i = 1; i < MAX_SERIAL_PORTS; i++)
         serial_devices[i] = NULL;
@@ -5072,6 +5084,11 @@ int main(int argc, char **argv, char **envp)
             case QEMU_OPTION_nographic:
                 nographic = 1;
                 break;
+#ifdef CONFIG_LLHWL
+            case QEMU_OPTION_llhwl:
+                llhwl = 1;
+                break;
+#endif
 #ifdef CONFIG_CURSES
             case QEMU_OPTION_curses:
                 curses = 1;
@@ -5556,6 +5573,12 @@ int main(int argc, char **argv, char **envp)
             }
         }
     }
+
+#if CONFIG_LLHWL
+    if(llhwl) {
+        llhwl_init();
+    }
+#endif
 
 #if defined(CONFIG_KVM) && defined(CONFIG_KQEMU)
     if (kvm_allowed && kqemu_allowed) {
