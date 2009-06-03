@@ -72,12 +72,10 @@ static void trigger_gpio_handle(int event_type, void *state, void *data)
         dump_register(s, &tgd->state_cache, bank, 0, 1);
         break;
     case LLHWL_EVENT_GPDAT_READ:
-        /*printf("gpdat read\n");
-        bank = *((int*)llhwl_report_event_data_get(event_type, 0));
+        /*bank = *((int*)llhwl_report_event_data_get(event_type, 0));
         dump_register(s, &tgd->state_cache, bank, 1, 0);*/
         break;
     case LLHWL_EVENT_GPDAT_WRITE:
-        printf("gpdat write\n");
         bank = *((int*)llhwl_report_event_data_get(event_type, 1));
         value = *((uint32_t*)llhwl_report_event_data_get(event_type, 0));
         dump_register(s, &tgd->state_cache, bank, 0, 0);

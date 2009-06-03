@@ -301,20 +301,21 @@ static void s3c_gpio_write(void *opaque, target_phys_addr_t addr,
         break;
     /* Per bank registers */
     case S3C_GPCON:
+        s->bank[bank].con = value;
+
         llhwl_report_event_data_put(LLHWL_EVENT_GPCON_WRITE, &value);
         llhwl_report_event_data_put(LLHWL_EVENT_GPCON_WRITE, &bank);
         llhwl_report_event(LLHWL_EVENT_GPCON_WRITE, s);
 
-        s->bank[bank].con = value;
         break;
     case S3C_GPDAT:
         diff = (s->bank[bank].dat ^ value) & s->bank[bank].mask;
         
+        s->bank[bank].dat = value;
+        
         llhwl_report_event_data_put(LLHWL_EVENT_GPDAT_WRITE, &value);
         llhwl_report_event_data_put(LLHWL_EVENT_GPDAT_WRITE, &bank);
         llhwl_report_event(LLHWL_EVENT_GPDAT_WRITE, s);
-
-        s->bank[bank].dat = value;
 
         while ((ln = ffs(diff))) {
             ln --;
