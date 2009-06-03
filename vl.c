@@ -5577,6 +5577,7 @@ int main(int argc, char **argv, char **envp)
 #if CONFIG_LLHWL
     if(llhwl) {
         llhwl_init();
+        llhwl_enable(1);
     }
 #endif
 
