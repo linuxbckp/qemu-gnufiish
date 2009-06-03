@@ -2,7 +2,7 @@
 #define LLHWL_H_
 
 /* Event definitions */
-#define LLHWL_EVENT_COUNT           22
+#define LLHWL_EVENT_COUNT           25
 #define LLHWL_EVENT_SPI_READ        (0)
 #define LLHWL_EVENT_SPI_WRITE       (1)
 #define LLHWL_EVENT_SPI_RESET       (2)
@@ -25,6 +25,8 @@
 #define LLHWL_EVENT_GPCON_WRITE     (19)
 #define LLHWL_EVENT_GPDAT_READ      (20)
 #define LLHWL_EVENT_GPDAT_WRITE     (21)
+#define LLHWL_EVENT_GLOFIISH_CPLD_READ 22
+#define LLHWL_EVENT_GLOFIISH_CPLD_WRITE 23
 
 #define LLHWL_EVENT_SPI             LLHWL_EVENT_COUNT + 1
 #define LLHWL_EVENT_DMA             LLHWL_EVENT_COUNT + 2

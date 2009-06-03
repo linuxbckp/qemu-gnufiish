@@ -19,6 +19,7 @@
 #include "sd.h"
 #include "dm9000.h"
 #include "eeprom24c0x.h"
+#include "glofiish.h"
 
 
 struct glofiish_s {
@@ -155,6 +156,8 @@ static struct glofiish_s *glofiish_init_common(int ram_size,
     }
     s->cpu = s3c24xx_init(S3C_CPU_2440, 12000000 /* 12 mhz */, s->ram, S3C_SRAM_BASE_NANDBOOT, s->mmc);
 
+	/* init glofiish cpld */
+
     /* Setup peripherals */
    // glofiish_gpio_setup(s);
     glofiish_spi_setup(s);
@@ -189,6 +192,8 @@ static void glofiish_init(ram_addr_t ram_size, int vga_ram_size,
 
 	glofiish->nand = nand_init(NAND_MFR_SAMSUNG, 0xaa);
     glofiish->cpu->nand->reg(glofiish->cpu->nand, glofiish->nand);
+
+	glofiish_cpld_init(0x80000000);
 
     glofiish_reset(glofiish);
 }
