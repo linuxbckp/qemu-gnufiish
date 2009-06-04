@@ -37,6 +37,8 @@ typedef struct {
 #define CHR_IOCTL_SERIAL_SET_TIOCM   13
 #define CHR_IOCTL_SERIAL_GET_TIOCM   14
 
+#define CHR_IOCTL_MODEM_HANDSHAKE    15
+
 #define CHR_TIOCM_CTS	0x020
 #define CHR_TIOCM_CAR	0x040
 #define CHR_TIOCM_DSR	0x100

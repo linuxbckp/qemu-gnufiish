@@ -10,6 +10,7 @@
 #include "sysemu.h"
 #include "i2c.h"
 #include "qemu-timer.h"
+#include "qemu-char.h"
 #include "devices.h"
 #include "audio/audio.h"
 #include "boards.h"
@@ -28,6 +29,8 @@ struct glofiish_s {
     const char * kernel;
     SDState * mmc;
     struct nand_flash_s *nand;
+    struct CharDriverState *modem;
+    QEMUTimer *modem_timer;
 };
 
 
@@ -131,6 +134,12 @@ static void glofiish_i2c_setup(struct glofiish_s *board)
     
 }
 
+static void glofiish_modem_switch_tick(void *opaque)
+{
+    struct glofiish_s *s = (struct glofiish_s*) opaque;
+    glofiish_modem_enable(s->modem, 1);
+}
+
 /* Board init.  */
 static struct glofiish_s *glofiish_init_common(int ram_size,
                 const char *kernel_filename, const char *cpu_model,
@@ -157,6 +166,13 @@ static struct glofiish_s *glofiish_init_common(int ram_size,
     s->cpu = s3c24xx_init(S3C_CPU_2440, 12000000 /* 12 mhz */, s->ram, S3C_SRAM_BASE_NANDBOOT, s->mmc);
 
 	/* init glofiish cpld */
+    glofiish_cpld_init(0x08000000);
+
+    /* init glofiish modem */
+    s->modem = glofiish_modem_init();
+    s->modem_timer = qemu_new_timer(vm_clock, glofiish_modem_switch_tick, s);
+    s3c_uart_attach(s->cpu->uart[0], s->modem);
+
 
     /* Setup peripherals */
    // glofiish_gpio_setup(s);
@@ -192,8 +208,6 @@ static void glofiish_init(ram_addr_t ram_size, int vga_ram_size,
 
 	glofiish->nand = nand_init(NAND_MFR_SAMSUNG, 0xaa);
     glofiish->cpu->nand->reg(glofiish->cpu->nand, glofiish->nand);
-
-	glofiish_cpld_init(0x08000000);
 
     glofiish_reset(glofiish);
 }
