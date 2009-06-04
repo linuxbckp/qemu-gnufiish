@@ -193,7 +193,7 @@ static void glofiish_init(ram_addr_t ram_size, int vga_ram_size,
 	glofiish->nand = nand_init(NAND_MFR_SAMSUNG, 0xaa);
     glofiish->cpu->nand->reg(glofiish->cpu->nand, glofiish->nand);
 
-	glofiish_cpld_init(0x80000000);
+	glofiish_cpld_init(0x08000000);
 
     glofiish_reset(glofiish);
 }
