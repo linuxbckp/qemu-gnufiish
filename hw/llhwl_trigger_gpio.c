@@ -546,10 +546,7 @@ static void pretty_dump_a(struct s3c_gpio_state_s *state,
         *changed = 1;
 
 		switch ((cfg >> n) & 1) {
-        case 0: 
-            tag_type = "in";
-            break; 
-		case 1:
+		case 0:
 			tag_type = "out";
 			break;
 		default:
