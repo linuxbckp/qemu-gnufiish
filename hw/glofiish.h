@@ -20,6 +20,9 @@
 #ifndef GLOFIISH_H_
 #define GLOFIISH_H_
 
+#define GLOFIISH_M800_MODEM_RST S3C_GPA(15)
+#define GLOFIISH_M800_MODEM_PWRON S3C_GPB(4)
+
 struct glofiish_cpld_state;
 struct glofiish_modem_state;
 

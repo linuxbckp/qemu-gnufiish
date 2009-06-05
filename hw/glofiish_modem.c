@@ -40,6 +40,7 @@ static int glofiish_modem_write(struct CharDriverState *chr, const uint8_t *buf,
     struct glofiish_modem_state *s = (struct glofiish_modem_state*) chr->opaque;
 
     /* FIXME handle incomming data */
+    printf("%s\n", __FUNCTION__);
 
     return len;
 }

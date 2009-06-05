@@ -140,6 +140,37 @@ static void glofiish_modem_switch_tick(void *opaque)
     glofiish_modem_enable(s->modem, 1);
 }
 
+static void glofiish_modem_switch(void *opaque, int line, int level)
+{
+    struct glofiish_s *s = (struct glofiish_s*) opaque;
+    
+    if(s->modem) {
+        if(level) {
+            qemu_mod_timer(s->modem_timer, qemu_get_clock(vm_clock) + (ticks_per_sec >> 4));
+        }
+        else {
+            qemu_del_timer(s->modem_timer);
+            glofiish_modem_enable(s->modem, 0);
+        }
+    }
+
+    fprintf(stderr, "Modem powered %s.\n", level ? "up" : "down");
+}
+
+static void glofiish_modem_rst_switch(void *opaque, int line, int level)
+{
+    if(level)
+        fprintf(stderr,"Modem reset\n");
+}
+
+static void glofiish_gpio_setup(struct glofiish_s *s)
+{
+    s3c_gpio_out_set(s->cpu->io, GLOFIISH_M800_MODEM_RST,
+                     *qemu_allocate_irqs(glofiish_modem_rst_switch, s, 1));
+    s3c_gpio_out_set(s->cpu->io, GLOFIISH_M800_MODEM_PWRON,
+                     *qemu_allocate_irqs(glofiish_modem_switch, s, 1));
+}
+
 /* Board init.  */
 static struct glofiish_s *glofiish_init_common(int ram_size,
                 const char *kernel_filename, const char *cpu_model,
@@ -164,6 +195,9 @@ static struct glofiish_s *glofiish_init_common(int ram_size,
         exit(2);
     }
     s->cpu = s3c24xx_init(S3C_CPU_2440, 12000000 /* 12 mhz */, s->ram, S3C_SRAM_BASE_NANDBOOT, s->mmc);
+
+    /* gpio setup */
+    glofiish_gpio_setup(s);
 
 	/* init glofiish cpld */
     glofiish_cpld_init(0x08000000);
