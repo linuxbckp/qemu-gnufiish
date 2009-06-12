@@ -37,6 +37,7 @@
 #define LLHWL_EVENT_CLKPWR          LLHWL_EVENT_COUNT + 7
 #define LLHWL_EVENT_TIMERS          LLHWL_EVENT_COUNT + 8
 #define LLHWL_EVENT_UART            LLHWL_EVENT_COUNT + 9
+#define LLHWL_EVENT_GLOFIISH_CPLD   LLHWL_EVENT_COUNT + 10
 
 void llhwl_init(void);
 void llhwl_release(void);

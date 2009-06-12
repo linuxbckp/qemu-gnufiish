@@ -104,6 +104,10 @@ void llhwl_watch_add(int event_type, void (*handler)(int event_type, void *state
         llhwl_watch_add(LLHWL_EVENT_I2C_READ, handler, data);
         llhwl_watch_add(LLHWL_EVENT_I2C_WRITE, handler, data);
         return;
+    case LLHWL_EVENT_GLOFIISH_CPLD:
+        llhwl_watch_add(LLHWL_EVENT_GLOFIISH_CPLD_READ, handler, data);
+        llhwl_watch_add(LLHWL_EVENT_GLOFIISH_CPLD_WRITE, handler, data);
+        return;
     /* FIXME add missing compiste event types */
     default:
         break;

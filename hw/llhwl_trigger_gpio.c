@@ -446,7 +446,7 @@ static void pretty_dump(struct s3c_gpio_state_s *state,
 
     for(n = 0; n < count; n++) {
         /* If nothing has changed continue with the next pin */
-        if ( (((cfg >> (2 * n)) & 3) == ((state_cache->bank[bank].con >> (2 * n)) & 3)) &&
+        if ((((cfg >> (2 * n)) & 3) == ((state_cache->bank[bank].con >> (2 * n)) & 3)) &&
              (((dat >> n) & 1) == ((state_cache->bank[bank].dat >> n) & 1)))
             continue;
 
@@ -531,7 +531,7 @@ static void pretty_dump_a(struct s3c_gpio_state_s *state,
 
 	for (n = 0; n < count; n++) {
         /* If nothing has changed continue with the next pin */
-        if ( 
+        if (
              (((cfg >> (2 * n)) & 3) == ((state_cache->bank[bank].con >> (2 * n)) & 3)) &&
              (((dat >> n) & 1) == ((state_cache->bank[bank].dat >> n) & 1)))
             continue;
