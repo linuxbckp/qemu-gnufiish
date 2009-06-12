@@ -35,12 +35,67 @@ struct glofiish_modem_state {
     char outfifo[FIFO_LEN];
 };
 
+int nbytes = 0;
+
+static inline void glofiish_modem_fifo_wake(struct glofiish_modem_state *s)
+{
+    printf("glofiish_modem_fifo_wake\n");
+    
+    if (!s->enable || !s->out_len)
+        return;
+
+    if (qemu_chr_can_read(&s->chr) && s->chr.chr_read) {
+        s->chr.chr_read(s->chr.handler_opaque,
+                        s->outfifo + s->out_start ++, 1);
+        s->out_len --;
+        s->out_start &= FIFO_LEN - 1;
+    }
+
+    if (s->out_len)
+        qemu_mod_timer(s->out_tm, qemu_get_clock(vm_clock) + s->baud_delay);
+
+}
+
+static void glofiish_modem_send(struct glofiish_modem_state *s, const char *data, int size)
+{
+    int len, off;
+
+    printf("glofiish_modem_send\n");
+
+    len = size;
+    if (len + s->out_len > FIFO_LEN) {
+        s->out_len = 0;
+        return;
+    }
+    off = (s->out_start + s->out_len) & (FIFO_LEN - 1);
+    if (off + len > FIFO_LEN) {
+        memcpy(s->outfifo + off, data, FIFO_LEN - off);
+        memcpy(s->outfifo, data + (FIFO_LEN - off), off + len - FIFO_LEN);
+    } else
+        memcpy(s->outfifo + off, data, len);
+    s->out_len += len;
+    glofiish_modem_fifo_wake(s);
+}
+
+const char answer8[] = {0xff, 0xef, 0x34, 0x3f, 0xa4, 0x50, 0x1e, 0x9b};
+
 static int glofiish_modem_write(struct CharDriverState *chr, const uint8_t *buf, int len)
 {
     struct glofiish_modem_state *s = (struct glofiish_modem_state*) chr->opaque;
+    int n;
 
     /* FIXME handle incomming data */
-    printf("%s\n", __FUNCTION__);
+    printf("%s (len=%i):", __FUNCTION__, len);
+    for(n=0; buf, n<len; n++, buf++) { printf("%02x ", *buf);}
+    printf("\n");
+
+    nbytes += len;
+
+    if(nbytes == 8) {
+        printf("nbytes == 8\n");
+        glofiish_modem_send(s, &answer8[0], 8);
+    }
+
 
     return len;
 }
@@ -53,6 +108,7 @@ static int glofiish_modem_ioctl(struct CharDriverState *chr, int cmd, void *arg)
     switch(cmd) {
     case CHR_IOCTL_SERIAL_SET_PARAMS:
         ssp = (QEMUSerialSetParams*)arg;
+        printf("baudrate: %i\n", ssp->speed);
         s->baud_delay = ticks_per_sec / ssp->speed;
         break;
     case CHR_IOCTL_MODEM_HANDSHAKE:
@@ -64,24 +120,6 @@ static int glofiish_modem_ioctl(struct CharDriverState *chr, int cmd, void *arg)
     }
 
     return 0;
-}
-
-static inline void glofiish_modem_fifo_wake(struct glofiish_modem_state *s)
-{
-    if(!s->enable || !s->out_len)
-        return;
-
-    if(s->chr.chr_can_read && s->chr.chr_can_read(s->chr.handler_opaque) &&
-       s->chr.chr_read)
-    {
-        s->chr.chr_read(s->chr.handler_opaque,
-                        s->outfifo + s->out_start++, 1);
-        s->out_len--;
-        s->out_start &= FIFO_LEN - 1;
-    }
-
-    if(s->out_len)
-        qemu_mod_timer(s->out_tm, qemu_get_clock(vm_clock) + s->baud_delay);
 }
 
 static void glofiish_modem_out_tick(void *opaque) 
