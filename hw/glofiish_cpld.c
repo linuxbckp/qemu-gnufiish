@@ -90,7 +90,7 @@ struct glofiish_cpld* glofiish_cpld_init(target_phys_addr_t base)
     glofiish_cpld_reset(s);
 
     iomemtype = cpu_register_io_memory(0, glofiish_cpld_readfn, glofiish_cpld_writefn, s);
-    cpu_register_physical_memory(s->base, 0x14, iomemtype); 
+    cpu_register_physical_memory(s->base, 0x20, iomemtype); 
 
     register_savevm("glofiish_cpld", 0, 0, glofiish_cpld_save, glofiish_cpld_load, s);
 
