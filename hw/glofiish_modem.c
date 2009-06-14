@@ -24,6 +24,21 @@
 #include "sysemu.h"
 #include "llhwl.h"
 
+#define MS_START            0
+#define MS_OFFLINE          1
+#define MS_ONLINE           2
+#define MS_TRANSMIT_1       3
+#define MS_TRANSMIT_2       4
+
+#define MAX_STATE           4
+
+#define MST_RST             0
+#define MST_nRST            1
+#define MST_PWRON           2
+#define MST_nPWRON          3
+#define MST_GPA11           4
+#define MST_RECEIVE_DATA    5
+
 struct glofiish_modem_state {
     int enable;
     CharDriverState chr;
@@ -33,9 +48,60 @@ struct glofiish_modem_state {
     int out_start;
     int out_len;
     char outfifo[FIFO_LEN];
+    int state_s;
 };
 
 int nbytes = 0;
+
+static void handle_state(struct glofiish_modem_state *s) 
+{
+    switch(s->state_s)
+    {
+    case MS_TRANSMIT_1:
+        break;
+    case MS_TRANSMIT_2:
+        break;
+    default:
+        break;
+    }
+}
+
+static void change_state(struct glofiish_modem_state *s, int transition)
+{
+    printf("change_state) state = %i, transition = %i\n", s->state_s, transition);
+
+    switch(s->state_s) 
+    {
+    case MS_START:
+        if(transition == MST_RST) {
+            s->state_s = MS_OFFLINE;
+            printf("entering MS_OFFLINE\n");
+        }
+        break;
+    case MS_OFFLINE:
+        if(transition == MST_PWRON) {
+            s->state_s = MS_ONLINE;
+            printf("entering MS_ONLINE\n");
+        }
+        break;
+    case MS_ONLINE:
+        if(transition == MST_nPWRON) { 
+            s->state_s = MS_TRANSMIT_1;
+            handle_state(s);
+            printf("entering MS_TRANSMIT_1\n");
+        }
+        break;
+    case MS_TRANSMIT_1:
+        if(transition == MST_RECEIVE_DATA) {
+            s->state_s = MS_TRANSMIT_2;
+            handle_state(s);
+            printf("entering MS_TRANSMIT_2\n");
+        }
+        break;
+    default: 
+        break;
+    }
+}
 
 static inline void glofiish_modem_fifo_wake(struct glofiish_modem_state *s)
 {
@@ -84,18 +150,7 @@ static int glofiish_modem_write(struct CharDriverState *chr, const uint8_t *buf,
     struct glofiish_modem_state *s = (struct glofiish_modem_state*) chr->opaque;
     int n;
 
-    /* FIXME handle incomming data */
-    printf("%s (len=%i):", __FUNCTION__, len);
-    for(n=0; buf, n<len; n++, buf++) { printf("%02x ", *buf);}
-    printf("\n");
-
-    nbytes += len;
-
-    if(nbytes == 8) {
-        printf("nbytes == 8\n");
-        glofiish_modem_send(s, &answer8[0], 8);
-    }
-
+    change_state(s, MST_RECEIVE_DATA);
 
     return len;
 }
@@ -127,18 +182,30 @@ static void glofiish_modem_out_tick(void *opaque)
     glofiish_modem_fifo_wake((struct glofiish_modem_state*) opaque);
 }
 
-void glofiish_modem_reset(struct glofiish_modem_state *s)
+void glofiish_modem_reset(struct glofiish_modem_state *s, int reset)
 {
-    s->out_len = 0;
-    s->baud_delay = ticks_per_sec;
+    if(reset)
+        change_state(s, MST_RST);
+    else
+        change_state(s, MST_nRST);
+}
+
+void glofiish_modem_gpa11(struct glofiish_modem_state *s, int level)
+{
+    if(level)
+        change_state(s, MST_GPA11);
 }
 
 void glofiish_modem_enable(struct CharDriverState *chr, int enable)
 {
     struct glofiish_modem_state *s = (struct glofiish_modem_state*) chr->opaque;
     s->enable = enable;
-    if(s->enable)
-        glofiish_modem_reset(s);
+    if(s->enable) {
+        change_state(s, MST_PWRON);
+        s->out_len = 0;
+        s->baud_delay = ticks_per_sec;
+    }
+    else change_state(s, MST_nPWRON);
 }
 
 struct CharDriverState* glofiish_modem_init()
@@ -149,6 +216,8 @@ struct CharDriverState* glofiish_modem_init()
     s->chr.chr_write = glofiish_modem_write;
     s->chr.chr_ioctl = glofiish_modem_ioctl;
     s->out_tm = qemu_new_timer(vm_clock, glofiish_modem_out_tick, s);
+    s->state_s = MS_START;
+    printf("glofiish_modem_init: state = %i\n", s->state_s);
 
     return &s->chr;
 }

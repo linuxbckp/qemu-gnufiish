@@ -159,9 +159,22 @@ static void glofiish_modem_switch(void *opaque, int line, int level)
 
 static void glofiish_modem_rst_switch(void *opaque, int line, int level)
 {
-    if(level)
-        fprintf(stderr,"Modem reset\n");
+    struct glofiish_s *s = (struct glofiish_s*) opaque;
+    
+    glofiish_modem_reset(s, level);
+
+    fprintf(stderr,"Modem %s\n", level ? "Reset" : "nReset");
 }
+
+static void glofiish_modem_gpa11_switch(void *opaque, int line, int level)
+{
+    struct glofiish_s *s = (struct glofiish_s*) opaque;
+
+    glofiish_modem_gpa11(s, level);
+
+    fprintf(stderr, "Modem GPA11=%s\n", level ? "1" : "0");
+}
+
 
 static void glofiish_gpio_setup(struct glofiish_s *s)
 {
@@ -169,6 +182,8 @@ static void glofiish_gpio_setup(struct glofiish_s *s)
                      *qemu_allocate_irqs(glofiish_modem_rst_switch, s, 1));
     s3c_gpio_out_set(s->cpu->io, GLOFIISH_M800_MODEM_PWRON,
                      *qemu_allocate_irqs(glofiish_modem_switch, s, 1));
+    s3c_gpio_out_set(s->cpu->io, GLOFIISH_M800_MODEM_GPA11,
+                     *qemu_allocate_irqs(glofiish_modem_gpa11_switch, s, 1));
 }
 
 /* Board init.  */

@@ -22,6 +22,7 @@
 
 #define GLOFIISH_M800_MODEM_RST S3C_GPA(15)
 #define GLOFIISH_M800_MODEM_PWRON S3C_GPB(4)
+#define GLOFIISH_M800_MODEM_GPA11 S3C_GPA(11)
 
 struct glofiish_cpld_state;
 struct glofiish_modem_state;
@@ -30,8 +31,9 @@ struct glofiish_cpld* glofiish_cpld_init(target_phys_addr_t base);
 void glofiish_cpld_reset(struct glofiish_cpld_state *cpld);
 
 struct CharDriverState* glofiish_modem_init();
-void glofiish_modem_reset(struct glofiish_modem_state *s);
+void glofiish_modem_reset(struct glofiish_modem_state *s, int level);
 void glofiish_modem_enable(struct CharDriverState *opaque, int enable);
+void glofiish_modem_gpa11(struct glofiish_modem_state *s, int level);
 
 #endif
 
