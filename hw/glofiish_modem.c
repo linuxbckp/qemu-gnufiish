@@ -48,18 +48,32 @@ struct glofiish_modem_state {
     int out_start;
     int out_len;
     char outfifo[FIFO_LEN];
-    int state_s;
 };
 
 int nbytes = 0;
+int modem_state = MS_START;
+int modem_uart = 0;
+
+void glofiish_modem_send(struct glofiish_modem_state *s, const char *data, int size);
 
 static void handle_state(struct glofiish_modem_state *s) 
 {
-    switch(s->state_s)
+    char buffer[200];
+    int size;
+    switch(modem_state)
     {
     case MS_TRANSMIT_1:
+        /* send 200 bytes */
+/*        size = 200;
+        memset(&buffer, 0, size);
+        glofiish_modem_send(s, &buffer, size); */
         break;
     case MS_TRANSMIT_2:
+        modem_uart = 1;
+        /* send 8 bytes */
+        size = 8;
+        snprintf(buffer, 8, "0a3dc49k");
+        glofiish_modem_send(s, &buffer, size);
         break;
     default:
         break;
@@ -68,34 +82,36 @@ static void handle_state(struct glofiish_modem_state *s)
 
 static void change_state(struct glofiish_modem_state *s, int transition)
 {
-    printf("change_state) state = %i, transition = %i\n", s->state_s, transition);
+    /*
+    printf("change_state) state = %i, transition = %i\n", modem_state, transition);
+    */
 
-    switch(s->state_s) 
+    switch(modem_state) 
     {
     case MS_START:
         if(transition == MST_RST) {
-            s->state_s = MS_OFFLINE;
+            modem_state = MS_OFFLINE;
             printf("entering MS_OFFLINE\n");
         }
         break;
     case MS_OFFLINE:
         if(transition == MST_PWRON) {
-            s->state_s = MS_ONLINE;
+            modem_state = MS_ONLINE;
             printf("entering MS_ONLINE\n");
         }
         break;
     case MS_ONLINE:
         if(transition == MST_nPWRON) { 
-            s->state_s = MS_TRANSMIT_1;
+            modem_state = MS_TRANSMIT_1;
             handle_state(s);
             printf("entering MS_TRANSMIT_1\n");
         }
         break;
     case MS_TRANSMIT_1:
         if(transition == MST_RECEIVE_DATA) {
-            s->state_s = MS_TRANSMIT_2;
-            handle_state(s);
+            modem_state = MS_TRANSMIT_2;
             printf("entering MS_TRANSMIT_2\n");
+            handle_state(s);
         }
         break;
     default: 
@@ -122,11 +138,9 @@ static inline void glofiish_modem_fifo_wake(struct glofiish_modem_state *s)
 
 }
 
-static void glofiish_modem_send(struct glofiish_modem_state *s, const char *data, int size)
+void glofiish_modem_send(struct glofiish_modem_state *s, const char *data, int size)
 {
-    int len, off;
-
-    printf("glofiish_modem_send\n");
+ /*   int len, off;
 
     len = size;
     if (len + s->out_len > FIFO_LEN) {
@@ -140,7 +154,9 @@ static void glofiish_modem_send(struct glofiish_modem_state *s, const char *data
     } else
         memcpy(s->outfifo + off, data, len);
     s->out_len += len;
-    glofiish_modem_fifo_wake(s);
+    glofiish_modem_fifo_wake(s);*/
+
+    s->chr.chr_read(s->chr.handler_opaque, data, size);
 }
 
 const char answer8[] = {0xff, 0xef, 0x34, 0x3f, 0xa4, 0x50, 0x1e, 0x9b};
@@ -150,6 +166,11 @@ static int glofiish_modem_write(struct CharDriverState *chr, const uint8_t *buf,
     struct glofiish_modem_state *s = (struct glofiish_modem_state*) chr->opaque;
     int n;
 
+    printf("glofiish_modem_write: ");
+    for(n=0; n<len; n++)
+        printf("%02x", buf[n]);
+    printf("\n");
+    
     change_state(s, MST_RECEIVE_DATA);
 
     return len;
@@ -216,8 +237,8 @@ struct CharDriverState* glofiish_modem_init()
     s->chr.chr_write = glofiish_modem_write;
     s->chr.chr_ioctl = glofiish_modem_ioctl;
     s->out_tm = qemu_new_timer(vm_clock, glofiish_modem_out_tick, s);
-    s->state_s = MS_START;
-    printf("glofiish_modem_init: state = %i\n", s->state_s);
+    modem_state = MS_START;
+    printf("glofiish_modem_init: state = %i\n", modem_state);
 
     return &s->chr;
 }
